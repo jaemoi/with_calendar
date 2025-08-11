@@ -82,16 +82,8 @@ class _TermsScreenState extends State<TermsScreen> {
                     child: GestureDetector(
                       onTap: (chkTerms && chkPrivacy)
                           ? () {
-                        Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => BottomNavBar(
-                                    pages: const [
-                                      HomeScreen(),
-                                      FamilyScreen(),
-                                      CalendarScreen(),
-                                      SettingsScreen()
-                                    ])));
+                        context.go(Routes.home);
+
                       }
                           : null,
                       child: Container(

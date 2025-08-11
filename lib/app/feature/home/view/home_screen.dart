@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:with_calendar/app/feature/home/view/schedule_event.dart';
+import 'package:with_calendar/app/feature/home/view/schedule_timeline.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -38,14 +40,24 @@ class HomeScreen extends StatelessWidget {
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   children: List.generate(7, (index) {
-                    final days = ["18\nMo", "19\nTu", "20\nWe", "21\nTh", "22\nFr", "23\nSa", "24\nSu"];
+                    final days = [
+                      "18\nMo",
+                      "19\nTu",
+                      "20\nWe",
+                      "21\nTh",
+                      "22\nFr",
+                      "23\nSa",
+                      "24\nSu"
+                    ];
                     final isSelected = index == 3;
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 0),
                       child: Container(
                         width: 48,
                         decoration: BoxDecoration(
-                          color: isSelected ? const Color(0xFFFFEFF3) : Colors.transparent,
+                          color: isSelected
+                              ? const Color(0xFFFFEFF3)
+                              : Colors.transparent,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         alignment: Alignment.center,
@@ -54,7 +66,9 @@ class HomeScreen extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w600,
-                            color: isSelected ? const Color(0xFFDE496E) : Colors.black,
+                            color: isSelected
+                                ? const Color(0xFFDE496E)
+                                : Colors.black,
                           ),
                         ),
                       ),
@@ -72,20 +86,33 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
 
-              // 일정 카드 1
-              scheduleCard(
-                time: "08.00",
-                title: "Rapat dengan Bruce Wayne",
-                color: const Color(0xFFDE496E),
-              ),
-              const SizedBox(height: 12),
-
-              // 일정 카드 2
-              scheduleCard(
-                time: "12.00",
-                title: "Test wawasan kebangsaan di Dusun Wakanda",
-                color: const Color(0xFFDE496E),
-              ),
+              Builder(builder: (context) {
+                final today = DateTime.now();
+                final events = <ScheduleEvent>[
+                  ScheduleEvent(
+                    start: DateTime(today.year, today.month, today.day, 8, 40),
+                    end: DateTime(today.year, today.month, today.day, 9, 0),
+                    title: "브루스 웨인과 회의",
+                    color: const Color(0xFFDE496E),
+                  ),
+                  ScheduleEvent(
+                    start: DateTime(today.year, today.month, today.day, 12, 0),
+                    end:   DateTime(today.year, today.month, today.day, 13, 30),
+                    title: "국가고시 모의",
+                    color: const Color(0xFFDE496E),
+                  ),
+                  ScheduleEvent(
+                    start: DateTime(today.year, today.month, today.day, 12, 0),
+                    end:   DateTime(today.year, today.month, today.day, 15, 45),
+                    title: "팀 스탠드업",
+                    color: Colors.deepPurpleAccent,
+                  ),
+                ];
+                return ScheduleTimeLine(events: events,
+                tickCount: 5,
+                slotMinutes: 120,
+                pixelsPerMinute: 0.7,);
+              }),
 
               const SizedBox(height: 24),
 
@@ -152,7 +179,8 @@ class HomeScreen extends StatelessWidget {
   }
 
   // 일정 카드 위젯
-  Widget scheduleCard({required String time, required String title, required Color color}) {
+  Widget scheduleCard(
+      {required String time, required String title, required Color color}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 3),
       child: Row(
@@ -169,7 +197,10 @@ class HomeScreen extends StatelessWidget {
               ),
               child: Text(
                 title,
-                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600),
               ),
             ),
           ),
@@ -179,7 +210,8 @@ class HomeScreen extends StatelessWidget {
   }
 
   // Reminder 카드 위젯
-  Widget reminderCard({required String title, required String time, required Color color}) {
+  Widget reminderCard(
+      {required String title, required String time, required Color color}) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -194,13 +226,18 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                Text(title,
+                    style: const TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(Icons.access_time, size: 14, color: Colors.white),
+                    const Icon(Icons.access_time,
+                        size: 14, color: Colors.white),
                     const SizedBox(width: 4),
-                    Text(time, style: const TextStyle(color: Colors.white, fontSize: 12)),
+                    Text(time,
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 12)),
                   ],
                 ),
               ],
