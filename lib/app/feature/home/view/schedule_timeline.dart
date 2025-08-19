@@ -13,8 +13,8 @@ class ScheduleTimeLine extends StatelessWidget {
   });
 
   final List<ScheduleEvent> events;
-  final int tickCount;         // 라벨 개수(기본 5개)
-  final int slotMinutes;       // 라벨 간격(분) — 기본 120분(=2h)
+  final int tickCount; // 라벨 개수(기본 5개)
+  final int slotMinutes; // 라벨 간격(분) — 기본 120분(=2h)
   final double pixelsPerMinute;
   final double viewportHeight;
 
@@ -29,32 +29,49 @@ class ScheduleTimeLine extends StatelessWidget {
         .map((e) => e.start.hour * 60 + e.start.minute)
         .reduce((a, b) => a < b ? a : b);
 
-    final baseMin = (minStartMin ~/ slotMinutes) * slotMinutes; // e.g., 8:13 → 8:00
-    // 총 표시 범위: (tickCount - 1) * slotMinutes (기본 8시간)
-    final rangeMin = (tickCount - 1) * slotMinutes;
+    // 가장 늦게 끝나는 시간(분)
+    final maxEndMin = events
+        .map((e) => e.end.hour * 60 + e.end.minute)
+        .reduce((a, b) => a > b ? a : b);
+
+    final baseMin =
+        (minStartMin ~/ slotMinutes) * slotMinutes; // e.g., 8:13 → 8:00
+    // (필요한 슬롯 수) = (maxEndMin이 포함되도록) 올림 나눗셈
+    final requiredSlots =
+        ((maxEndMin - baseMin) + (slotMinutes - 1)) ~/ slotMinutes;
+
+    // 실제 사용할 라벨 개수(기존 tickCount보다 작게 내려가지 않게)
+    final usedTickCount =
+        (requiredSlots + 1) > tickCount ? (requiredSlots + 1) : tickCount;
+
+    // 여기부터는 모두 usedTickCount 기준으로 계산
+    final rangeMin = (usedTickCount - 1) * slotMinutes;
     final endMin = baseMin + rangeMin;
 
-    final totalHeight = rangeMin * pixelsPerMinute; // 예: 480px
+    final totalHeight = rangeMin * pixelsPerMinute;
     final segmentHeight = slotMinutes * pixelsPerMinute;
+
     final railWidth = 56.0;
 
     // 2) 그리드/라벨용 시간 리스트
-    final tickMins = List.generate(tickCount, (i) => baseMin + i * slotMinutes);
+    final tickMins = List.generate(usedTickCount, (i) => baseMin + i * slotMinutes);
 
     // 3) 화면에 보이는 범위로 이벤트 클램프
-    final visible = events.map((e) {
-      final s = e.start.hour * 60 + e.start.minute;
-      final t = e.end.hour * 60 + e.end.minute;
-      final cs = s.clamp(baseMin, endMin);
-      final ct = t.clamp(baseMin, endMin);
-      return (ct > cs)
-          ? (e, cs as int, ct as int)
-          : null;
-    }).whereType<(ScheduleEvent, int, int)>().toList();
+    final visible = events
+        .map((e) {
+          final s = e.start.hour * 60 + e.start.minute;
+          final t = e.end.hour * 60 + e.end.minute;
+          final cs = s.clamp(baseMin, endMin);
+          final ct = t.clamp(baseMin, endMin);
+          return (ct > cs) ? (e, cs as int, ct as int) : null;
+        })
+        .whereType<(ScheduleEvent, int, int)>()
+        .toList();
 
     // === 추가: 같은 시작 시각(분)으로 그룹핑 ===
     const double minVisualHeight = 44.0; // 너무 얇은 카드 방지
-    final Map<int, List<(ScheduleEvent e, int s, int t, double visualHeight)>> groups = {};
+    final Map<int, List<(ScheduleEvent e, int s, int t, double visualHeight)>>
+        groups = {};
     for (final tup in visible) {
       final e = tup.$1;
       final s = tup.$2;
@@ -80,7 +97,7 @@ class ScheduleTimeLine extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: List.generate(tickCount, (i) {
+                  children: List.generate(usedTickCount, (i) {
                     final label = _fmtTime(tickMins[i]);
                     return Padding(
                       padding: const EdgeInsets.only(top: 2.0),
@@ -101,37 +118,39 @@ class ScheduleTimeLine extends StatelessWidget {
                   height: totalHeight,
                   child: Stack(
                     children: [
-                      for (final key in groupKeys) ...() {
-                        final g = groups[key]!;
-                        final groupTop = (key - baseMin) * pixelsPerMinute;
-                        final groupHeight = g.map((x) => x.$4).reduce((a,
-                            b) => a > b ? a : b);
+                      for (final key in groupKeys)
+                        ...() {
+                          final g = groups[key]!;
+                          final groupTop = (key - baseMin) * pixelsPerMinute;
+                          final groupHeight = g
+                              .map((x) => x.$4)
+                              .reduce((a, b) => a > b ? a : b);
 
-                        return [
-                          Positioned(
-                            top: groupTop,
-                            left: 0,
-                            right: 0,
-                            height: groupHeight,
-                            child: Row(
-                              children: [
-                                for (final item in g)
-                                  Expanded(
-                                    child: Align(
-                                      alignment: Alignment.topCenter,
-                                      child: _eventTile(
-                                        e: item.$1,
-                                        s: item.$2,
-                                        t: item.$3,
-                                        height: item.$4, // 각 카드 고유 높이
+                          return [
+                            Positioned(
+                              top: groupTop,
+                              left: 0,
+                              right: 0,
+                              height: groupHeight,
+                              child: Row(
+                                children: [
+                                  for (final item in g)
+                                    Expanded(
+                                      child: Align(
+                                        alignment: Alignment.topCenter,
+                                        child: _eventTile(
+                                          e: item.$1,
+                                          s: item.$2,
+                                          t: item.$3,
+                                          height: item.$4, // 각 카드 고유 높이
+                                        ),
                                       ),
                                     ),
-                                  ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                        ];
-                      }(),
+                          ];
+                        }(),
                     ],
                   ),
                 ),
@@ -149,51 +168,118 @@ class ScheduleTimeLine extends StatelessWidget {
     required int t,
     required double height,
   }) {
-    // 짧은 일정은 컴팩트 레이아웃
+    // 짧은 일정은 컴팩트 폰트/패딩
     final dense = height <= 44.0 + 0.1;
     final padV = dense ? 6.0 : 12.0;
-    final titleFont = dense ? 12.0 : 15.0;
-    final titleLines = dense ? 1 : 2;
+    final titleFont = dense ? 13.0 : 16.0; // 제목 더 크게
+    final titleLines = dense ? 2 : 3; // 공간 허용 시 최대 3줄
 
     return SizedBox(
       height: height,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12, vertical: padV),
-        decoration: BoxDecoration(
-          color: e.color,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            // 제목: 공간이 부족하면 생략(…)
-            Expanded(
-              child: Text(
-                e.title,
-                maxLines: titleLines,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: titleFont,
-                  fontWeight: FontWeight.w600,
+      child: Stack(
+        children: [
+          // 배경 + 제목(왼쪽 상단 정렬, 시간 텍스트 제거)
+          Positioned.fill(
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: padV),
+              decoration: BoxDecoration(
+                color: e.color,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: Text(
+                  e.title,
+                  maxLines: titleLines,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: titleFont,
+                    fontWeight: FontWeight.w700,
+                    height: 1.2,
+                  ),
                 ),
               ),
             ),
-            const SizedBox(width: 8),
-            // ⬅️ 시간은 항상 표시
-            Text(
-              '${_fmtTime(s)} - ${_fmtTime(t)}',
-              style: const TextStyle(color: Colors.white70, fontSize: 12),
+          ),
+
+          // 참가자 아바타: 우하단에 겹쳐 표시
+          if (e.participants.isNotEmpty)
+            Positioned(
+              right: 8,
+              bottom: 8,
+              child: _avatarStack(e.participants),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
-
 
   String _fmtTime(int minutes) {
     final h = (minutes ~/ 60).toString().padLeft(2, '0');
     final m = (minutes % 60).toString().padLeft(2, '0');
     return '$h:$m';
+  }
+
+  Widget _avatarStack(List<String> avatars) {
+    const double size = 10; // 아바타 지름
+    const double overlap = 7; // 겹치는 정도
+    const int maxShow = 5; // 최대 표시 수
+
+    final show = avatars.take(maxShow).toList();
+    final extra = avatars.length - show.length;
+
+    return SizedBox(
+      height: size,
+      // 가로 폭은 동적으로: (표시개수 + 추가버튼) * overlap 정도
+      width: (show.length + (extra > 0 ? 1 : 0)) * overlap + (size - overlap),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          for (int i = 0; i < show.length; i++)
+            Positioned(
+              right: i * overlap,
+              child: _avatarCircle(show[show.length - 1 - i], size),
+            ),
+          if (extra > 0)
+            Positioned(
+              right: show.length * overlap,
+              child: Container(
+                width: size,
+                height: size,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(size / 2),
+                  border: Border.all(color: Colors.white, width: 1),
+                ),
+                child: Text(
+                  '+$extra',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _avatarCircle(String src, double size) {
+    final ImageProvider provider = src.startsWith('http')
+        ? NetworkImage(src)
+        : AssetImage(src) as ImageProvider;
+
+    return CircleAvatar(
+      radius: size / 2,
+      backgroundColor: Colors.white, // 경계선 대비
+      child: CircleAvatar(
+        radius: (size / 2) - 1.5,
+        backgroundImage: provider,
+      ),
+    );
   }
 }

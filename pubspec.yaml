@@ -38,7 +38,11 @@ dependencies:
   go_router:
   flutter_riverpod:
   flutter_svg:
-
+  kakao_flutter_sdk_share:
+  url_launcher:
+  table_calendar:
+  http:
+  intl:
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -69,6 +73,7 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    - assets/solarterms/solarterms_2020_2035.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

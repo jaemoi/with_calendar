@@ -93,17 +93,17 @@ class HomeScreen extends StatelessWidget {
                     start: DateTime(today.year, today.month, today.day, 8, 40),
                     end: DateTime(today.year, today.month, today.day, 9, 0),
                     title: "브루스 웨인과 회의",
-                    color: const Color(0xFFDE496E),
+                    color: const Color(0xFFFF6E91),
                   ),
                   ScheduleEvent(
                     start: DateTime(today.year, today.month, today.day, 12, 0),
-                    end:   DateTime(today.year, today.month, today.day, 13, 30),
+                    end:   DateTime(today.year, today.month, today.day, 14, 30),
                     title: "국가고시 모의",
-                    color: const Color(0xFFDE496E),
+                    color: const Color(0xFFFF6E91),
                   ),
                   ScheduleEvent(
                     start: DateTime(today.year, today.month, today.day, 12, 0),
-                    end:   DateTime(today.year, today.month, today.day, 15, 45),
+                    end:   DateTime(today.year, today.month, today.day, 17, 45),
                     title: "팀 스탠드업",
                     color: Colors.deepPurpleAccent,
                   ),
@@ -121,9 +121,9 @@ class HomeScreen extends StatelessWidget {
                 "Reminder",
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 1),
               const Text(
-                "Don't forget schedule for tomorrow",
+                "내일의 일정입니다.",
                 style: TextStyle(fontSize: 14, color: Colors.grey),
               ),
               const SizedBox(height: 16),
@@ -140,32 +140,34 @@ class HomeScreen extends StatelessWidget {
                 color: Colors.purpleAccent.shade200,
               ),
 
-              const SizedBox(height: 54),
+              const SizedBox(height: 40),
 
               // Set schedule 버튼
-              SizedBox(
-                width: 250,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                  child: Ink(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFFDE496E), Color(0xFFFF6E91)],
+              Center(
+                child: SizedBox(
+                  width: 250,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
                       ),
-                      borderRadius: BorderRadius.all(Radius.circular(30)),
                     ),
-                    child: Container(
-                      alignment: Alignment.center,
-                      child: const Text(
-                        "Set schedule",
-                        style: TextStyle(fontSize: 18, color: Colors.white),
+                    child: Ink(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFFDE496E), Color(0xFFFF6E91)],
+                        ),
+                        borderRadius: BorderRadius.all(Radius.circular(30)),
+                      ),
+                      child: Container(
+                        alignment: Alignment.center,
+                        child: const Text(
+                          "일정을 추가해보세요",
+                          style: TextStyle(fontSize: 18, color: Colors.white),
+                        ),
                       ),
                     ),
                   ),

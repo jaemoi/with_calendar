@@ -6,11 +6,13 @@ class ScheduleEvent {
   final DateTime end;
   final String title;
   final Color color;
+  final List<String> participants;
 
   const ScheduleEvent({
     required this.start,
     required this.end,
     required this.title,
     required this.color,
+    this.participants = const [],
   });
 }
