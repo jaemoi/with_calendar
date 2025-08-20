@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:with_calendar/app/config/routes/app_routes.dart';
 import 'package:with_calendar/app/feature/home/view/schedule_event.dart';
 import 'package:with_calendar/app/feature/home/view/schedule_timeline.dart';
 
@@ -148,7 +150,9 @@ class HomeScreen extends StatelessWidget {
                   width: 250,
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      context.go(Routes.createSchedule);
+                    },
                     style: ElevatedButton.styleFrom(
                       padding: EdgeInsets.zero,
                       shape: RoundedRectangleBorder(

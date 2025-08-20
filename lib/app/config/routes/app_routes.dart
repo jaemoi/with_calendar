@@ -1,6 +1,7 @@
 // routes.dart
 import 'package:go_router/go_router.dart';
 import 'package:with_calendar/app/feature/calendar/view/calendar_screen.dart';
+import 'package:with_calendar/app/feature/schedule_create/view/schedule_create_screen.dart';
 import 'package:with_calendar/app/feature/settings/view/settings_screen.dart';
 import '../../feature/bottom_navigation_bar/view/bottom_navigation_screen.dart';
 import '../../feature/familiy/view/family_screen.dart';
@@ -13,6 +14,7 @@ class Routes {
   static const login = '/login';
   static const terms = '/terms';
   static const selectMode = '/select-mode';
+  static const createSchedule = '/create-schedule';
 
   // 탭 루트 경로(쉘 내부)
   static const home = '/home';
@@ -27,6 +29,9 @@ class Routes {
       GoRoute(path: login, builder: (_, __) => const LoginScreen()),
       GoRoute(path: terms, builder: (_, __) => const TermsScreen()),
       GoRoute(path: selectMode, builder: (_, __) => const SelectModeScreen()),
+      GoRoute(
+          path: createSchedule,
+          builder: (_, __) => const ScheduleCreateScreen()),
 
       // 바텀 네비가 항상 보이는 메인 쉘
       StatefulShellRoute.indexedStack(
