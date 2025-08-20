@@ -23,12 +23,26 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   DateTime _focused = DateTime.now();
   DateTime? _selected;
 
+  // YearPicker 범위
+  final DateTime _firstYear = DateTime(1950, 1, 1);
+  final DateTime _lastYear  = DateTime(DateTime.now().year + 10, 12, 31);
+
   @override
   Widget build(BuildContext context) {
     final async = ref.watch(calendarControllerProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('With Calendar')),
+      appBar: AppBar(
+        title: const Text('With Calendar'),
+        actions: [
+          TextButton.icon(
+            onPressed: _openYearPicker,
+            icon: const Icon(Icons.calendar_month_outlined, size: 18, color: Colors.black),
+            label: Text('${_focused.year}년',style: const TextStyle(color: Colors.black),),
+            style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.onPrimary),
+          ),
+        ],
+      ),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('에러: $e')),
@@ -42,7 +56,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           return Column(
             children: [
               TableCalendar<DayBadge>(
-                firstDay: DateTime.utc(2018, 1, 1),
+                firstDay: DateTime.utc(1950, 1, 1),
                 lastDay: DateTime.utc(2035, 12, 31),
                 focusedDay: _focused,
                 calendarFormat: _format,
@@ -50,6 +64,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 selectedDayPredicate: (d) => isSameDay(_selected, d),
                 onDaySelected: (sel, foc) => setState(() {
                   _selected = sel;
+                  _focused = foc;
+                }),
+                onPageChanged: (foc) => setState(() {
                   _focused = foc;
                 }),
                 eventLoader: (day) =>
@@ -212,4 +229,44 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       ),
     );
   }
+
+  void _openYearPicker() {
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: false,
+      backgroundColor: Colors.white,
+      builder: (ctx) {
+        return SizedBox(
+          height: 360,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 12, 16, 8),
+                child: Text('연도 선택', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+              ),
+              Expanded(
+                child: YearPicker(
+                  firstDate: _firstYear,
+                  lastDate: _lastYear,
+                  selectedDate: DateTime(_focused.year, 1, 1),
+                  onChanged: (date) {
+                    // 선택 즉시 해당 연도의 현재 월로 이동
+                    setState(() {
+                      _focused  = DateTime(date.year, _focused.month, 1);
+                      // 선택 상태는 유지/초기화 중 택1
+                      // _selected = null;
+                    });
+                    Navigator.pop(ctx);
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
 }
