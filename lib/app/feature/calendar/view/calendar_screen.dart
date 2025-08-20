@@ -35,7 +35,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         data: (eventsByDay) {
           final selectedBadges = _selected == null
               ? []
-              : eventsByDay[DateTime(_selected!.year, _selected!.month, _selected!.day)] ?? [];
+              : eventsByDay[DateTime(
+                      _selected!.year, _selected!.month, _selected!.day)] ??
+                  [];
 
           return Column(
             children: [
@@ -51,20 +53,17 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   _focused = foc;
                 }),
                 eventLoader: (day) =>
-                eventsByDay[DateTime(day.year, day.month, day.day)] ?? [],
-
+                    eventsByDay[DateTime(day.year, day.month, day.day)] ?? [],
                 headerStyle: const HeaderStyle(
                   titleCentered: true,
                   formatButtonVisible: false,
                 ),
-
-
-
                 calendarStyle: CalendarStyle(
                   outsideDaysVisible: true,
                   isTodayHighlighted: true,
                   todayDecoration: BoxDecoration(
-                    border: Border.all(color: const Color(0xFFDE496E), width: 1.4),
+                    border:
+                        Border.all(color: const Color(0xFFDE496E), width: 1.4),
                     shape: BoxShape.circle,
                   ),
                   selectedDecoration: const BoxDecoration(
@@ -77,10 +76,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-
                 calendarBuilders: CalendarBuilders(
                   dowBuilder: (context, day) {
-                    final text = ['일', '월', '화', '수', '목', '금', '토'][day.weekday % 7];
+                    final text =
+                        ['일', '월', '화', '수', '목', '금', '토'][day.weekday % 7];
                     final isSun = day.weekday == DateTime.sunday;
                     final isSat = day.weekday == DateTime.saturday;
 
@@ -91,59 +90,71 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                           color: isSun
                               ? const Color(0xFFE53935) // 빨강
                               : isSat
-                              ? const Color(0xFF1E88E5) // 파랑
-                              : Colors.black87,
+                                  ? const Color(0xFF1E88E5) // 파랑
+                                  : Colors.black87,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                     );
                   },
                   defaultBuilder: _day,
-                  outsideBuilder: (ctx, day, foc) => _day(ctx, day, foc, outside: true),
-                  todayBuilder: (ctx, day, foc) => _day(ctx, day, foc, isToday: true),
-                  selectedBuilder: (ctx, day, foc) => _day(ctx, day, foc, isSelected: true),
+                  outsideBuilder: (ctx, day, foc) =>
+                      _day(ctx, day, foc, outside: true),
+                  todayBuilder: (ctx, day, foc) =>
+                      _day(ctx, day, foc, isToday: true),
+                  selectedBuilder: (ctx, day, foc) =>
+                      _day(ctx, day, foc, isSelected: true),
                   markerBuilder: _markerBuilder,
                 ),
               ),
-
               const Divider(height: 1),
               const SizedBox(height: 12),
-
               if (_selected != null)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${_selected!.year}-${_selected!.month.toString().padLeft(2, '0')}-${_selected!.day.toString().padLeft(2, '0')}',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                      ),
-                      const SizedBox(height: 8),
-                      if (selectedBadges.isNotEmpty)
-                        ...selectedBadges.map((e) => Row(
-                          children: [
-                            Container(
-                              width: 8,
-                              height: 8,
-                              margin: const EdgeInsets.only(right: 6),
-                              decoration: BoxDecoration(
-                                color: e.color,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            Text(e.label, style: const TextStyle(fontSize: 15)),
-                          ],
-                        ))
-                      else
-                        const Text('해당 날짜에 표시할 절기 정보가 없습니다.'),
-                    ],
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // 항상 좌측 정렬 날짜 표시
+                        Text(
+                          '${_selected!.year}-${_selected!.month.toString().padLeft(2, '0')}-${_selected!.day.toString().padLeft(2, '0')}',
+                          style: const TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 8),
+
+                        // 절기 정보 또는 비어있음 표시
+                        if (selectedBadges.isNotEmpty)
+                          ...selectedBadges.map((e) => _badgeLine(e.label, dotColor: e.color))
+                        else
+                          _badgeLine('일정이 없습니다.')
+                      ],
+                    ),
                   ),
-                )
+                ),
             ],
           );
         },
       ),
+    );
+  }
+
+  Widget _badgeLine(String label, {Color? dotColor}) {
+    return Row(
+      children: [
+        if (dotColor != null) ...[
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 6),
+        ],
+        Text(label, style: const TextStyle(fontSize: 15)),
+      ],
     );
   }
 
@@ -152,26 +163,32 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final isSun = day.weekday == DateTime.sunday;
     final isSat = day.weekday == DateTime.saturday;
 
-    Color base = const Color(0xFF111111);
-    if (isSun) base = const Color(0xFFE53935);
-    if (isSat) base = const Color(0xFF1E88E5);
-    if (outside) base = base.withOpacity(0.35);
-    if (isSelected) base = Colors.white;
+    Color textColor = const Color(0xFF111111);
+    if (isSun) textColor = const Color(0xFFE53935);
+    if (isSat) textColor = const Color(0xFF1E88E5);
+    if (outside) textColor = textColor.withOpacity(0.35);
 
     return Container(
       alignment: Alignment.center,
       margin: const EdgeInsets.all(6),
+      decoration: isSelected
+          ? const BoxDecoration(
+              color: Color(0xFFDE496E),
+              shape: BoxShape.circle,
+            )
+          : null,
       child: Text(
         '${day.day}',
         style: TextStyle(
-          color: isSelected ? Colors.black : base, // 선택된 날짜: 흰배경 대비 검정글씨
-          fontWeight: isToday || isSelected ? FontWeight.w800 : FontWeight.w600,
+          color: isSelected ? Colors.white : textColor,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );
   }
 
-  Widget? _markerBuilder(BuildContext context, DateTime day, List<dynamic> events) {
+  Widget? _markerBuilder(
+      BuildContext context, DateTime day, List<dynamic> events) {
     if (events.isEmpty) return null;
     final list = events.take(3).cast<DayBadge>().toList();
 
@@ -183,14 +200,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: list
             .map((e) => Container(
-          width: 5,
-          height: 5,
-          margin: const EdgeInsets.symmetric(horizontal: 2),
-          decoration: BoxDecoration(
-            color: e.color,
-            shape: BoxShape.circle,
-          ),
-        ))
+                  width: 5,
+                  height: 5,
+                  margin: const EdgeInsets.symmetric(horizontal: 2),
+                  decoration: BoxDecoration(
+                    color: e.color,
+                    shape: BoxShape.circle,
+                  ),
+                ))
             .toList(),
       ),
     );
