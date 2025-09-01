@@ -6,6 +6,7 @@ class Family {
   final String name;
   final String image; // 네트워크/에셋 모두 허용
   final List<Member> members;
+
   Family({required this.name, required this.image, required this.members});
 }
 
@@ -25,8 +26,22 @@ class FamilyScreen extends StatefulWidget {
 class _FamilyScreenState extends State<FamilyScreen> {
   // 서버 연동 전 임시 상태
   Family? _family; // null이면 "가족 없음" 상태
-  String get _inviteUrl => 'https://with.app/invite/abcdef123456'; // 서버에서 받은 토큰 URL
+  String get _inviteUrl =>
+      'https://with.app/invite/abcdef123456'; // 서버에서 받은 토큰 URL
   static const MethodChannel _shareCh = MethodChannel('app.share');
+
+  @override
+  void initState() {
+    super.initState();
+
+    _family = Family(
+        name: '우리 가족',
+        image: 'assets/images/family_temporary.png',
+        members: [
+          Member('나', 'assets/images/profile.png'),
+          Member('엄마', 'assets/images/profile.png'),
+        ]);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,9 +62,9 @@ class _FamilyScreenState extends State<FamilyScreen> {
                 InkWell(
                   onTap: hasFamily
                       ? () {
-                    // 가족 이미지 탭 → 가족 전용 채팅방
-                    context.go('/family/chat');
-                  }
+                          // 가족 이미지 탭 → 가족 전용 채팅방
+                          context.pushNamed('familyChat');
+                        }
                       : null,
                   borderRadius: BorderRadius.circular(24),
                   child: Container(
@@ -93,7 +108,8 @@ class _FamilyScreenState extends State<FamilyScreen> {
           child: Image.asset(
             'assets/images/family_empty.png',
             fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) => const Icon(Icons.family_restroom, size: 72, color: Colors.grey),
+            errorBuilder: (_, __, ___) =>
+                const Icon(Icons.family_restroom, size: 72, color: Colors.grey),
           ),
         ),
         const SizedBox(height: 16),
@@ -133,7 +149,10 @@ class _FamilyScreenState extends State<FamilyScreen> {
                       ? NetworkImage(family.image)
                       : AssetImage(family.image) as ImageProvider,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const Icon(Icons.family_restroom, size: 36, color: Colors.grey),
+                  errorBuilder: (_, __, ___) => const Icon(
+                      Icons.family_restroom,
+                      size: 36,
+                      color: Colors.grey),
                 ),
               ),
             ),
@@ -141,7 +160,8 @@ class _FamilyScreenState extends State<FamilyScreen> {
             Expanded(
               child: Text(
                 family.name,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                style:
+                    const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -149,7 +169,8 @@ class _FamilyScreenState extends State<FamilyScreen> {
           ],
         ),
         const SizedBox(height: 16),
-        const Text('가족 구성원', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+        const Text('가족 구성원',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
         const SizedBox(height: 10),
         _memberChips(family.members),
         const SizedBox(height: 12),
@@ -184,7 +205,9 @@ class _FamilyScreenState extends State<FamilyScreen> {
             children: [
               CircleAvatar(radius: 10, backgroundImage: provider),
               const SizedBox(width: 6),
-              Text(m.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+              Text(m.name,
+                  style: const TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w600)),
             ],
           ),
         );
@@ -201,15 +224,18 @@ class _FamilyScreenState extends State<FamilyScreen> {
         onPressed: _openInviteSheet,
         style: ElevatedButton.styleFrom(
           padding: EdgeInsets.zero,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
         ),
         child: Ink(
           decoration: const BoxDecoration(
-            gradient: LinearGradient(colors: [Color(0xFFDE496E), Color(0xFFFF6E91)]),
+            gradient:
+                LinearGradient(colors: [Color(0xFFDE496E), Color(0xFFFF6E91)]),
             borderRadius: BorderRadius.all(Radius.circular(30)),
           ),
           child: const Center(
-            child: Text('가족 초대하기', style: TextStyle(fontSize: 18, color: Colors.white)),
+            child: Text('가족 초대하기',
+                style: TextStyle(fontSize: 18, color: Colors.white)),
           ),
         ),
       ),
@@ -230,11 +256,19 @@ class _FamilyScreenState extends State<FamilyScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFFDDDDDD), borderRadius: BorderRadius.circular(2))),
+                Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                        color: const Color(0xFFDDDDDD),
+                        borderRadius: BorderRadius.circular(2))),
                 const SizedBox(height: 12),
-                const Text('가족 초대', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                const Text('가족 초대',
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 8),
-                const Text('카카오톡 등 메신저로 링크를 공유하세요.', style: TextStyle(fontSize: 13, color: Colors.grey)),
+                const Text('카카오톡 등 메신저로 링크를 공유하세요.',
+                    style: TextStyle(fontSize: 13, color: Colors.grey)),
                 const SizedBox(height: 16),
                 ListTile(
                   leading: const Icon(Icons.ios_share),
@@ -251,7 +285,8 @@ class _FamilyScreenState extends State<FamilyScreen> {
                     await Clipboard.setData(ClipboardData(text: _inviteUrl));
                     if (mounted) {
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('링크가 복사됐어요.')));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('링크가 복사됐어요.')));
                     }
                   },
                 ),

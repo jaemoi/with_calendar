@@ -4,8 +4,15 @@ import 'package:with_calendar/app/config/routes/app_routes.dart';
 import 'package:with_calendar/app/feature/home/view/schedule_event.dart';
 import 'package:with_calendar/app/feature/home/view/schedule_timeline.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+
 
   @override
   Widget build(BuildContext context) {
@@ -92,28 +99,34 @@ class HomeScreen extends StatelessWidget {
                 final today = DateTime.now();
                 final events = <ScheduleEvent>[
                   ScheduleEvent(
+                    id: 101,
                     start: DateTime(today.year, today.month, today.day, 8, 40),
                     end: DateTime(today.year, today.month, today.day, 9, 0),
                     title: "브루스 웨인과 회의",
                     color: const Color(0xFFFF6E91),
                   ),
                   ScheduleEvent(
+                    id: 102,
                     start: DateTime(today.year, today.month, today.day, 12, 0),
-                    end:   DateTime(today.year, today.month, today.day, 14, 30),
+                    end: DateTime(today.year, today.month, today.day, 14, 30),
                     title: "국가고시 모의",
                     color: const Color(0xFFFF6E91),
                   ),
                   ScheduleEvent(
+                    id: 103,
                     start: DateTime(today.year, today.month, today.day, 12, 0),
-                    end:   DateTime(today.year, today.month, today.day, 17, 45),
+                    end: DateTime(today.year, today.month, today.day, 17, 45),
                     title: "팀 스탠드업",
                     color: Colors.deepPurpleAccent,
                   ),
                 ];
-                return ScheduleTimeLine(events: events,
-                tickCount: 5,
-                slotMinutes: 120,
-                pixelsPerMinute: 0.7,);
+                return ScheduleTimeLine(
+                  events: events,
+                  tickCount: 5,
+                  slotMinutes: 120,
+                  pixelsPerMinute: 0.7,
+                  onEventTap: (e) => context.push('/schedule/${e.id}'),
+                );
               }),
 
               const SizedBox(height: 24),
@@ -151,7 +164,7 @@ class HomeScreen extends StatelessWidget {
                   height: 56,
                   child: ElevatedButton(
                     onPressed: () {
-                      context.go(Routes.createSchedule);
+                      context.push(Routes.createSchedule);
                     },
                     style: ElevatedButton.styleFrom(
                       padding: EdgeInsets.zero,

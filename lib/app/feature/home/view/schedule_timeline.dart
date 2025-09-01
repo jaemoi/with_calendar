@@ -1,22 +1,24 @@
 // 3) 타임라인 위젯: 왼쪽(라벨 2시간 간격), 오른쪽(정확한 시간 위치에 카드)
 import 'package:flutter/material.dart';
 import 'package:with_calendar/app/feature/home/view/schedule_event.dart';
+import 'package:with_calendar/app/feature/schedule_detail/view/schedule_detail_screen.dart';
 
 class ScheduleTimeLine extends StatelessWidget {
-  const ScheduleTimeLine({
-    super.key,
-    required this.events,
-    this.tickCount = 5,
-    this.slotMinutes = 120,
-    this.pixelsPerMinute = 0.6,
-    this.viewportHeight = 240,
-  });
+  const ScheduleTimeLine(
+      {super.key,
+      required this.events,
+      this.tickCount = 5,
+      this.slotMinutes = 120,
+      this.pixelsPerMinute = 0.6,
+      this.viewportHeight = 240,
+      this.onEventTap});
 
   final List<ScheduleEvent> events;
   final int tickCount; // 라벨 개수(기본 5개)
   final int slotMinutes; // 라벨 간격(분) — 기본 120분(=2h)
   final double pixelsPerMinute;
   final double viewportHeight;
+  final void Function(ScheduleEvent event)? onEventTap;
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +56,8 @@ class ScheduleTimeLine extends StatelessWidget {
     final railWidth = 56.0;
 
     // 2) 그리드/라벨용 시간 리스트
-    final tickMins = List.generate(usedTickCount, (i) => baseMin + i * slotMinutes);
+    final tickMins =
+        List.generate(usedTickCount, (i) => baseMin + i * slotMinutes);
 
     // 3) 화면에 보이는 범위로 이벤트 클램프
     final visible = events
@@ -176,41 +179,50 @@ class ScheduleTimeLine extends StatelessWidget {
 
     return SizedBox(
       height: height,
-      child: Stack(
-        children: [
-          // 배경 + 제목(왼쪽 상단 정렬, 시간 텍스트 제거)
-          Positioned.fill(
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 12, vertical: padV),
-              decoration: BoxDecoration(
-                color: e.color,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Align(
-                alignment: Alignment.topLeft,
-                child: Text(
-                  e.title,
-                  maxLines: titleLines,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: titleFont,
-                    fontWeight: FontWeight.w700,
-                    height: 1.2,
+      child: ClipRect(
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: () => onEventTap?.call(e),
+            child: Stack(
+              children: [
+                // 배경 + 제목(왼쪽 상단 정렬, 시간 텍스트 제거)
+                Positioned.fill(
+                  child: Container(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: padV),
+                    decoration: BoxDecoration(
+                      color: e.color,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Align(
+                      alignment: Alignment.topLeft,
+                      child: Text(
+                        e.title,
+                        maxLines: titleLines,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: titleFont,
+                          fontWeight: FontWeight.w700,
+                          height: 1.2,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
+
+                // 참가자 아바타: 우하단에 겹쳐 표시
+                if (e.participants.isNotEmpty)
+                  Positioned(
+                    right: 8,
+                    bottom: 8,
+                    child: _avatarStack(e.participants),
+                  ),
+              ],
             ),
           ),
-
-          // 참가자 아바타: 우하단에 겹쳐 표시
-          if (e.participants.isNotEmpty)
-            Positioned(
-              right: 8,
-              bottom: 8,
-              child: _avatarStack(e.participants),
-            ),
-        ],
+        ),
       ),
     );
   }
@@ -221,7 +233,7 @@ class ScheduleTimeLine extends StatelessWidget {
     return '$h:$m';
   }
 
-  Widget _avatarStack(List<String> avatars) {
+  Widget _avatarStack(List<Participant> avatars) {
     const double size = 10; // 아바타 지름
     const double overlap = 7; // 겹치는 정도
     const int maxShow = 5; // 최대 표시 수
@@ -268,18 +280,45 @@ class ScheduleTimeLine extends StatelessWidget {
     );
   }
 
-  Widget _avatarCircle(String src, double size) {
-    final ImageProvider provider = src.startsWith('http')
-        ? NetworkImage(src)
-        : AssetImage(src) as ImageProvider;
+  Widget _avatarCircle(Participant p, double size) {
+    final url = p.avatarUrl;
+
+    if (url != null && url.isNotEmpty) {
+      final ImageProvider provider = url.startsWith('http')
+          ? NetworkImage(url)
+          : AssetImage(url) as ImageProvider;
+
+      return CircleAvatar(
+        radius: size / 2,
+        backgroundColor: Colors.white, // 경계선 대비
+        child: CircleAvatar(
+          radius: (size / 2) - 1.5,
+          backgroundImage: provider,
+        ),
+      );
+    }
+
+    final initial = _firstChar(p.name);
 
     return CircleAvatar(
       radius: size / 2,
-      backgroundColor: Colors.white, // 경계선 대비
+      backgroundColor: Colors.white,
       child: CircleAvatar(
         radius: (size / 2) - 1.5,
-        backgroundImage: provider,
+        backgroundColor: Colors.black26,
+        child: Text(
+          initial,
+          style: const TextStyle(
+              fontSize: 8, fontWeight: FontWeight.w800, color: Colors.white),
+        ),
       ),
     );
+  }
+
+  // 유니코드 첫 글자 안전 추출 (한글/이모지 포함)
+  String _firstChar(String s) {
+    final t = s.trim();
+    if (t.isEmpty) return '?';
+    return String.fromCharCodes(t.runes.take(1)).toUpperCase();
   }
 }

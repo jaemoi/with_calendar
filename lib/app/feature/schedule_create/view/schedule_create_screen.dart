@@ -5,6 +5,7 @@ import '../widget/add_chip.dart';
 import '../widget/category_chip.dart';
 import '../widget/date_card.dart';
 import '../widget/other_date_card.dart';
+import '../widget/participant_chip.dart';
 import '../widget/save_button.dart';
 import '../widget/section_title.dart';
 import '../widget/time_cell.dart';
@@ -17,6 +18,16 @@ class ScheduleCreateScreen extends StatefulWidget {
 }
 
 class _ScheduleCreateScreenState extends State<ScheduleCreateScreen> {
+  final String _meName = '나'; // 로그인 사용자 닉네임
+  final List<String> _familyMembers = ['나', '배우자1234', '첫째', '둘째', '할머니']; // 예시
+  late final List<String> _selectableMembers =
+      _familyMembers.where((n) => n != _meName).toList();
+
+  final Set<String> _selectedParticipants = {};
+
+//ㅈㅔ목
+  final _titleCtrl = TextEditingController();
+
   // 시간
   TimeOfDay _from = const TimeOfDay(hour: 12, minute: 0);
   TimeOfDay _to = const TimeOfDay(hour: 14, minute: 0);
@@ -186,6 +197,30 @@ class _ScheduleCreateScreenState extends State<ScheduleCreateScreen> {
                 color: AppColors.headline,
               ),
             ),
+
+            const SizedBox(height: 20),
+
+            // NEW: Title 입력
+            const SectionTitle('Title'),
+            const SizedBox(height: 13),
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.card,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: AppColors.divider),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: TextField(
+                controller: _titleCtrl,
+                maxLines: 1,
+                decoration: const InputDecoration(
+                  hintText: 'Enter a title (e.g., Family dinner)',
+                  hintStyle: TextStyle(color: AppColors.subtle),
+                  border: InputBorder.none,
+                ),
+              ),
+            ),
+
             const SizedBox(height: 28),
 
             // ===== Start date =====
@@ -215,7 +250,6 @@ class _ScheduleCreateScreenState extends State<ScheduleCreateScreen> {
                 },
               ),
             ]),
-            const SizedBox(height: 12),
             Row(
               children: [
                 for (int i = 0; i < 3; i++) ...[
@@ -253,7 +287,7 @@ class _ScheduleCreateScreenState extends State<ScheduleCreateScreen> {
               ],
             ),
 
-            const SizedBox(height: 28),
+            const SizedBox(height: 20),
 
             AnimatedCrossFade(
               duration: const Duration(milliseconds: 200),
@@ -266,7 +300,7 @@ class _ScheduleCreateScreenState extends State<ScheduleCreateScreen> {
                 children: [
                   const SizedBox(height: 8),
                   const SectionTitle('Select end date'),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 13),
                   Row(
                     children: [
                       for (int i = 0; i < 3; i++) ...[
@@ -303,9 +337,9 @@ class _ScheduleCreateScreenState extends State<ScheduleCreateScreen> {
               ),
             ),
 
-            const SizedBox(height: 28),
+            const SizedBox(height: 20),
             const SectionTitle('Select time'),
-            const SizedBox(height: 12),
+            const SizedBox(height: 13),
 
             // Time range
             Container(
@@ -343,11 +377,9 @@ class _ScheduleCreateScreenState extends State<ScheduleCreateScreen> {
             ),
 
             // NEW: End date 토글 & (펼침) 선택
-            const SizedBox(height: 12),
-
-            const SizedBox(height: 28),
+            const SizedBox(height: 40),
             const SectionTitle('Category'),
-            const SizedBox(height: 12),
+            const SizedBox(height: 13),
             Wrap(
               spacing: 12,
               runSpacing: 12,
@@ -371,6 +403,35 @@ class _ScheduleCreateScreenState extends State<ScheduleCreateScreen> {
                 }),
               ],
             ),
+
+            const SizedBox(height: 28),
+            const SectionTitle('Participants'),
+            const SizedBox(height: 13),
+
+            if (_selectableMembers.isEmpty)
+              const Text('표시할 가족이 없어요.',
+                  style: TextStyle(color: AppColors.subtle))
+            else
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  for (final name in _selectableMembers)
+                    ParticipantChip(
+                      label: name,
+                      selected: _selectedParticipants.contains(name),
+                      onTap: () {
+                        setState(() {
+                          if (_selectedParticipants.contains(name)) {
+                            _selectedParticipants.remove(name);
+                          } else {
+                            _selectedParticipants.add(name);
+                          }
+                        });
+                      },
+                    ),
+                ],
+              ),
 
             const SizedBox(height: 28),
             const SectionTitle('Note'),
