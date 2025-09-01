@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:with_calendar/app/shared/theme/palette.dart';
 
+
+import '../../schedule_detail/view/schedule_detail_screen.dart';
 import '../widget/add_chip.dart';
 import '../widget/category_chip.dart';
 import '../widget/date_card.dart';
@@ -10,36 +13,47 @@ import '../widget/save_button.dart';
 import '../widget/section_title.dart';
 import '../widget/time_cell.dart';
 
-class ScheduleCreateScreen extends StatefulWidget {
-  const ScheduleCreateScreen({super.key});
+enum ScheduleFormMode { create, edit }
+
+class ScheduleForm extends StatefulWidget {
+  const ScheduleForm({
+    super.key,
+    required this.mode,
+    this.initial, // edit 모드일 때만 사용
+  });
+
+  final ScheduleFormMode mode;
+  final Schedule? initial;
 
   @override
-  State<ScheduleCreateScreen> createState() => _ScheduleCreateScreenState();
+  State<ScheduleForm> createState() => _ScheduleFormState();
 }
 
-class _ScheduleCreateScreenState extends State<ScheduleCreateScreen> {
-  final String _meName = '나'; // 로그인 사용자 닉네임
-  final List<String> _familyMembers = ['나', '배우자1234', '첫째', '둘째', '할머니']; // 예시
+class _ScheduleFormState extends State<ScheduleForm> {
+  // ===== 상태값 =====
+  final String _meName = '나';
+  final List<String> _familyMembers = ['나', '배우자1234', '첫째', '둘째', '할머니'];
   late final List<String> _selectableMembers =
       _familyMembers.where((n) => n != _meName).toList();
 
   final Set<String> _selectedParticipants = {};
 
-//ㅈㅔ목
+  // 제목/노트
   final _titleCtrl = TextEditingController();
+  final _noteCtrl = TextEditingController();
 
   // 시간
   TimeOfDay _from = const TimeOfDay(hour: 12, minute: 0);
   TimeOfDay _to = const TimeOfDay(hour: 14, minute: 0);
 
-  // 날짜 카드(오늘부터 3일 + Other Date) - 시작일
+  // 날짜 카드(오늘부터 3일 + Other Date)
   late final List<DateTime> _dates =
       List.generate(3, (i) => DateTime.now().add(Duration(days: i)));
   int _selectedDateIndex = 1; // 가운데 선택
   DateTime? _customDate;
 
-  // NEW: 다중 일자 여부 + 끝나는 날 상태
-  bool _multiDay = false; // End date 토글
+  // 다중 일자 + 끝나는 날
+  bool _multiDay = false;
   late final List<DateTime> _endDates =
       List.generate(3, (i) => DateTime.now().add(Duration(days: i)));
   int _endSelectedIndex = 1;
@@ -53,9 +67,7 @@ class _ScheduleCreateScreenState extends State<ScheduleCreateScreen> {
     _Cat('Other', const Color(0xFF3A3A3A), const Color(0xFFF1F1F1)),
     _Cat('Weekend', const Color(0xFF0B7A28), const Color(0xFFEFF9F1)),
   ];
-  final Set<String> _selectedCats = {'약속'}; // FIX: 존재하는 라벨로
-
-  final _noteCtrl = TextEditingController();
+  final Set<String> _selectedCats = {'약속'};
 
   // ===== Helpers =====
   String _fmtDay(DateTime d) => d.day.toString().padLeft(2, '0');
@@ -144,7 +156,6 @@ class _ScheduleCreateScreenState extends State<ScheduleCreateScreen> {
         _customDate = picked;
         _selectedDateIndex = 3; // Other Date
         if (!_multiDay) {
-          // 단일일자라면 끝나는 날도 따라오게
           _endSelectedIndex = _selectedDateIndex;
           _endCustomDate = _customDate;
         }
@@ -153,7 +164,6 @@ class _ScheduleCreateScreenState extends State<ScheduleCreateScreen> {
     }
   }
 
-  // NEW: 끝나는 날 커스텀
   Future<void> _pickEndCustomDate() async {
     final now = DateTime.now();
     final picked = await showDatePicker(
@@ -172,7 +182,52 @@ class _ScheduleCreateScreenState extends State<ScheduleCreateScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    final s = widget.initial;
+    if (s != null) {
+      // ✅ 편집 모드 초기값 주입
+      _titleCtrl.text = s.title;
+      _noteCtrl.text = s.note ?? '';
+
+      _from = TimeOfDay(hour: s.start.hour, minute: s.start.minute);
+      _to = TimeOfDay(hour: s.end.hour, minute: s.end.minute);
+
+      // 날짜 선택: 프리셋 범위를 고려해 'Other'로 고정
+      _customDate = DateTime(s.start.year, s.start.month, s.start.day);
+      _selectedDateIndex = 3;
+
+      final sameDate = DateUtils.isSameDay(s.start, s.end);
+      _multiDay = !sameDate;
+
+      if (_multiDay) {
+        _endCustomDate = DateTime(s.end.year, s.end.month, s.end.day);
+        _endSelectedIndex = 3;
+      } else {
+        _endCustomDate = _customDate;
+        _endSelectedIndex = _selectedDateIndex;
+      }
+
+      _selectedCats
+        ..clear()
+        ..addAll(s.categories);
+      _selectedParticipants
+        ..clear()
+        ..addAll(s.participants.map((p) => p.name));
+    }
+  }
+
+  @override
+  void dispose() {
+    _titleCtrl.dispose();
+    _noteCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final isEdit = widget.mode == ScheduleFormMode.edit;
+
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: AppBar(
@@ -180,7 +235,14 @@ class _ScheduleCreateScreenState extends State<ScheduleCreateScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
-        leading: const BackButton(),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.pop(), // ✅ 확실한 뒤로가기
+        ),
+        title: Text(
+          isEdit ? 'Edit Schedule' : 'Create Schedule',
+          style: const TextStyle(color: AppColors.headline),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
@@ -200,7 +262,7 @@ class _ScheduleCreateScreenState extends State<ScheduleCreateScreen> {
 
             const SizedBox(height: 20),
 
-            // NEW: Title 입력
+            // Title
             const SectionTitle('Title'),
             const SizedBox(height: 13),
             Container(
@@ -236,12 +298,10 @@ class _ScheduleCreateScreenState extends State<ScheduleCreateScreen> {
                   setState(() {
                     _multiDay = v;
                     if (_multiDay) {
-                      // 기본값: 시작일과 같게 두되, 필요 시 사용자가 바꾸게
                       _endSelectedIndex = _selectedDateIndex;
                       _endCustomDate =
                           _selectedDateIndex == 3 ? _customDate : null;
                     } else {
-                      // 단일일자 모드로 복귀
                       _endSelectedIndex = _selectedDateIndex;
                       _endCustomDate =
                           _selectedDateIndex == 3 ? _customDate : null;
@@ -354,11 +414,11 @@ class _ScheduleCreateScreenState extends State<ScheduleCreateScreen> {
                     child: TimeCell(
                       label: 'From',
                       value: _fmtTime(_from),
-                      caption: _multiDay ? _fmtDateCaption(_endDate) : null,
+                      // ✅ 시작 날짜 캡션
+                      caption: _multiDay ? _fmtDateCaption(_startDate) : null,
                       onTap: _pickFrom,
                     ),
                   ),
-                  //const SizedBox(width: 6),
                   const Spacer(),
                   const Icon(Icons.chevron_right_rounded,
                       size: 24, color: Colors.black87),
@@ -367,7 +427,7 @@ class _ScheduleCreateScreenState extends State<ScheduleCreateScreen> {
                     child: TimeCell(
                       label: 'To',
                       value: _fmtTime(_to),
-                      // NEW: 다중 일자면 캡션으로 끝나는 날짜 표시
+                      // ✅ 끝 날짜 캡션
                       caption: _multiDay ? _fmtDateCaption(_endDate) : null,
                       onTap: _pickTo,
                     ),
@@ -376,7 +436,6 @@ class _ScheduleCreateScreenState extends State<ScheduleCreateScreen> {
               ),
             ),
 
-            // NEW: End date 토글 & (펼침) 선택
             const SizedBox(height: 40),
             const SectionTitle('Category'),
             const SizedBox(height: 13),
@@ -456,21 +515,74 @@ class _ScheduleCreateScreenState extends State<ScheduleCreateScreen> {
             ),
 
             const SizedBox(height: 32),
-            SaveButton(onTap: () {
-              // TODO: 저장 로직
-              // start: _startDate + _from, end: _endDate + _to
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Saved! (demo)')),
-              );
-            }),
+            SaveButton(
+              onTap: _onSubmit, // ✅ 저장/업데이트
+            ),
           ],
         ),
       ),
     );
   }
+
+  Future<void> _onSubmit() async {
+    final title = _titleCtrl.text.trim();
+    if (title.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('제목을 입력해 주세요.')),
+      );
+      return;
+    }
+
+    // 날짜+시간 합치기
+    final start = DateTime(
+      _startDate.year,
+      _startDate.month,
+      _startDate.day,
+      _from.hour,
+      _from.minute,
+    );
+    var end = DateTime(
+      _endDate.year,
+      _endDate.month,
+      _endDate.day,
+      _to.hour,
+      _to.minute,
+    );
+    if (!end.isAfter(start)) {
+      end = start.add(const Duration(hours: 1)); // 안전망
+    }
+
+    final participants = _selectedParticipants
+        .map((n) => Participant(n))
+        .toList(growable: false);
+
+    final isEdit = widget.mode == ScheduleFormMode.edit;
+
+    final id = isEdit ? widget.initial!.id : _IdService.next();
+
+    final schedule = Schedule(
+      id: id,
+      title: title,
+      start: start,
+      end: end,
+      categories: _selectedCats.toList(),
+      participants: participants,
+      note: _noteCtrl.text.trim(),
+    );
+
+    await ScheduleRepository.instance.put(schedule);
+    if (!mounted) return;
+
+    // 저장 후 이동: 생성은 push, 수정은 go로 치환
+    if (isEdit) {
+      context.go('/schedule/$id');
+    } else {
+      context.push('/schedule/$id');
+    }
+  }
 }
 
-// ===== Widgets =====
+// ===== 내부 전용 클래스/유틸 =====
 
 class _Cat {
   final String name;
@@ -478,4 +590,11 @@ class _Cat {
   final Color bg;
 
   const _Cat(this.name, this.dot, this.bg);
+}
+
+// 임시 int ID 생성기 — 필요 시 프로젝트 고유 로직으로 교체
+class _IdService {
+  static int _next = 1000;
+
+  static int next() => _next++;
 }

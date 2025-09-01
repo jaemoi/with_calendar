@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:with_calendar/app/shared/theme/palette.dart';
 
 class ScheduleDetailScreen extends StatelessWidget {
@@ -48,10 +49,7 @@ class ScheduleDetailScreen extends StatelessWidget {
           child: _PrimaryActionButton(
             label: '수정하기',
             onPressed: () {
-              // TODO: 편집 흐름 연결
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Edit action (TODO)')),
-              );
+              context.push('/schedule/${schedule.id}/edit');
             },
           ),
         ),
@@ -119,8 +117,8 @@ class ScheduleDetailScreen extends StatelessWidget {
             const _SectionHeader(icon: Icons.group, label: 'Participants'),
             const SizedBox(height: 10),
             if (schedule.participants.isEmpty)
-              _InfoCard(
-                child: const Text(
+              const _InfoCard(
+                child: Text(
                   '함께 참여하는 사람이 없어요.',
                   style: TextStyle(color: AppColors.subtle, fontSize: 14),
                 ),
@@ -130,8 +128,6 @@ class ScheduleDetailScreen extends StatelessWidget {
                 spacing: 12,
                 runSpacing: 12,
                 children: [
-                  for (final p in schedule.participants)
-                    const _ParticipantPillDivider(), // 시각적 간격 & 균일 높이 확보용
                   for (final p in schedule.participants)
                     _ParticipantPill(label: p.name),
                 ],
@@ -148,7 +144,8 @@ class ScheduleDetailScreen extends StatelessWidget {
                   : '상세 내용이 없습니다.',
             ),
 
-            const SizedBox(height: 16), // bottomNavigationBar와 간섭 방지 여백
+            const SizedBox(height: 16),
+            // bottomNavigationBar와 간섭 방지 여백
           ],
         ),
       ),
@@ -203,12 +200,15 @@ class _InfoCard extends StatelessWidget {
 // ✅ Detail(노트) 영역: 생성 화면 Note처럼 충분한 높이 유지
 class _NoteCard extends StatelessWidget {
   final String text;
+
   const _NoteCard({required this.text});
+
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      constraints: const BoxConstraints(minHeight: 120), // 충분한 높이
+      constraints: const BoxConstraints(minHeight: 120),
+      // 충분한 높이
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(18),
@@ -218,7 +218,8 @@ class _NoteCard extends StatelessWidget {
       child: Text(
         text,
         softWrap: true,
-        style: const TextStyle(fontSize: 15, color: AppColors.headline, height: 1.4),
+        style: const TextStyle(
+            fontSize: 15, color: AppColors.headline, height: 1.4),
       ),
     );
   }
@@ -227,6 +228,7 @@ class _NoteCard extends StatelessWidget {
 // ✅ Category 작은 칩 (생성 화면 CategoryChip 느낌)
 class _CategoryPill extends StatelessWidget {
   final String name;
+
   const _CategoryPill({required this.name});
 
   // 생성 화면과 동일한 팔레트 매핑 (필요 시 공용화 가능)
@@ -263,7 +265,8 @@ class _CategoryPill extends StatelessWidget {
         children: [
           // 작은 점
           Container(
-            width: 6, height: 6,
+            width: 6,
+            height: 6,
             margin: const EdgeInsets.only(right: 8),
             decoration: BoxDecoration(color: dot, shape: BoxShape.circle),
           ),
@@ -280,37 +283,50 @@ class _CategoryPill extends StatelessWidget {
   }
 }
 
-// ✅ Participant 작은 칩 (생성 화면 ParticipantChip의 읽기 전용 버전)
 class _ParticipantPill extends StatelessWidget {
   final String label;
   const _ParticipantPill({required this.label});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return ConstrainedBox(
       constraints: const BoxConstraints(minHeight: 36),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.divider, width: 1),
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        label,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontWeight: FontWeight.w700,
-          color: AppColors.headline,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.divider, width: 1),
+        ),
+        child: Align(
+          alignment: Alignment.center,   // 중앙 배치
+          widthFactor: 1,                // ✅ 부모 폭 채우지 않게
+          heightFactor: 1,               // ✅ 내용 높이에 맞게
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              softWrap: false,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppColors.headline,
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
+
+
 // 칩들의 시각적 균일 높이/간격을 위해 넣은 얇은 구분자(옵션)
 class _ParticipantPillDivider extends StatelessWidget {
   const _ParticipantPillDivider();
+
   @override
   Widget build(BuildContext context) {
     return const SizedBox.shrink();
@@ -321,6 +337,7 @@ class _ParticipantPillDivider extends StatelessWidget {
 class _PrimaryActionButton extends StatelessWidget {
   final String label;
   final VoidCallback onPressed;
+
   const _PrimaryActionButton({required this.label, required this.onPressed});
 
   @override
@@ -425,6 +442,7 @@ class ScheduleRepository {
   ScheduleRepository._() {
     _seedMockIfDebug(); // ✅ 앱 시작 시 1회 시드
   }
+
   static final instance = ScheduleRepository._();
 
   final Map<int, Schedule> _store = {};
@@ -432,11 +450,12 @@ class ScheduleRepository {
   Iterable<Schedule> get all => List.unmodifiable(_store.values);
 
   Future<void> put(Schedule s) async => _store[s.id] = s;
+
   Future<Schedule?> getById(int id) async => _store[id];
 
   Future<List<Schedule>> listByDay(DateTime day) async {
     final start = DateTime(day.year, day.month, day.day);
-    final end   = start.add(const Duration(days: 1));
+    final end = start.add(const Duration(days: 1));
     bool overlaps(Schedule s) => s.start.isBefore(end) && s.end.isAfter(start);
     return _store.values.where(overlaps).toList();
   }
@@ -455,7 +474,7 @@ class ScheduleRepository {
         id: 101,
         title: '브루스 웨인과 회의',
         start: DateTime(y, m, d, 8, 40),
-        end:   DateTime(y, m, d, 9,  0),
+        end: DateTime(y, m, d, 9, 0),
         categories: const ['약속'],
         participants: const [Participant('브루스 웨인')],
         note: '웨인타워 14F 대회의실',
@@ -465,7 +484,7 @@ class ScheduleRepository {
         id: 102,
         title: '국가고시 모의',
         start: DateTime(y, m, d, 12, 0),
-        end:   DateTime(y, m, d, 14, 30),
+        end: DateTime(y, m, d, 14, 30),
         categories: const ['시험'],
         participants: const [],
         note: '입실 11:40',
@@ -475,7 +494,7 @@ class ScheduleRepository {
         id: 103,
         title: '팀 스탠드업',
         start: DateTime(y, m, d, 12, 0),
-        end:   DateTime(y, m, d, 17, 45),
+        end: DateTime(y, m, d, 17, 45),
         categories: const ['회의'],
         participants: const [Participant('홍길동'), Participant('김철수')],
         note: null,
@@ -484,5 +503,3 @@ class ScheduleRepository {
     }());
   }
 }
-
-

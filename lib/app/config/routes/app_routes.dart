@@ -2,14 +2,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:with_calendar/app/feature/calendar/view/calendar_screen.dart';
-import 'package:with_calendar/app/feature/schedule_create/view/schedule_create_screen.dart';
 import 'package:with_calendar/app/feature/schedule_detail/view/schedule_detail_screen.dart';
 import 'package:with_calendar/app/feature/settings/view/settings_screen.dart';
+
 import '../../feature/bottom_navigation_bar/view/bottom_navigation_screen.dart';
 import '../../feature/chat/view/chat_screen.dart';
 import '../../feature/familiy/view/family_screen.dart';
 import '../../feature/home/view/home_screen.dart';
 import '../../feature/login/view/login_screen.dart';
+import '../../feature/schedule_upsert/view/schedule_upsert_screen.dart';
 import '../../feature/select_mode/view/select_mode_screen.dart';
 import '../../feature/terms/view/terms_screen.dart';
 
@@ -20,8 +21,9 @@ class Routes {
   static const login = '/login';
   static const terms = '/terms';
   static const selectMode = '/select-mode';
-  static const createSchedule = '/create-schedule';
+  static const createSchedule = '/schedule/new';
   static const scheduleDetail = '/schedule/:id';
+  static const editSchedule = '/schedule/:id/edit';
 
   // 탭 루트 경로(쉘 내부)
   static const home = '/home';
@@ -39,7 +41,16 @@ class Routes {
       GoRoute(path: selectMode, builder: (_, __) => const SelectModeScreen()),
       GoRoute(
           path: createSchedule,
-          builder: (_, __) => const ScheduleCreateScreen()),
+          builder: (_, __) => const ScheduleUpsertScreen()),
+      GoRoute(
+          path: editSchedule,
+          builder: (context, state) {
+            final id = int.tryParse(state.pathParameters['id'] ?? '');
+            if (id == null) {
+              return const Scaffold(body: Center(child: Text('잘못된 일정 ID')));
+            }
+            return ScheduleUpsertScreen(scheduleId: id);
+          }),
       GoRoute(
         path: scheduleDetail,
         parentNavigatorKey: _rootNavigatorKey,
@@ -53,11 +64,13 @@ class Routes {
             future: ScheduleRepository.instance.getById(id),
             builder: (context, snap) {
               if (snap.connectionState != ConnectionState.done) {
-                return const Scaffold(body: Center(child: CircularProgressIndicator()));
+                return const Scaffold(
+                    body: Center(child: CircularProgressIndicator()));
               }
               final s = snap.data;
               if (s == null) {
-                return const Scaffold(body: Center(child: Text('일정을 찾을 수 없어요.')));
+                return const Scaffold(
+                    body: Center(child: Text('일정을 찾을 수 없어요.')));
               }
               return ScheduleDetailScreen(schedule: s);
             },
