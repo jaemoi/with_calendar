@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:with_calendar/app/config/routes/app_routes.dart';
 import 'package:with_calendar/app/feature/home/view/schedule_event.dart';
 import 'package:with_calendar/app/feature/home/view/schedule_timeline.dart';
+import 'package:with_calendar/app/feature/home/view/seven_day_strip.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,8 +13,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -42,49 +41,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
               const SizedBox(height: 8),
-
-              // 요일 선택 (가로)
-              SizedBox(
-                height: 60,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: List.generate(7, (index) {
-                    final days = [
-                      "18\nMo",
-                      "19\nTu",
-                      "20\nWe",
-                      "21\nTh",
-                      "22\nFr",
-                      "23\nSa",
-                      "24\nSu"
-                    ];
-                    final isSelected = index == 3;
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 0),
-                      child: Container(
-                        width: 48,
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? const Color(0xFFFFEFF3)
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          days[index],
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w600,
-                            color: isSelected
-                                ? const Color(0xFFDE496E)
-                                : Colors.black,
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-              ),
+              SevenDayStrip(),
 
               const SizedBox(height: 15),
 

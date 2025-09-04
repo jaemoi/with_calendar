@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+import '../../../config/routes/app_routes.dart';
 import '../controller/calendar_controller.dart';
 
 class DayBadge {
@@ -35,6 +37,17 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       appBar: AppBar(
         title: const Text('With Calendar'),
         actions: [
+        IconButton(
+          icon: const Icon(Icons.add, color: Colors.black),
+          tooltip: '새 일정',
+          onPressed: () {
+            // 선택된 날짜가 있으면 그 날, 없으면 현재 포커스된 달의 날짜
+            final base = _selected ?? _focused;
+            final dayOnly = DateTime(base.year, base.month, base.day);
+            // create 라우트로 날짜를 extra로 전달
+            context.push(Routes.createSchedule, extra: dayOnly);
+          },
+        ),
           TextButton.icon(
             onPressed: _openYearPicker,
             icon: const Icon(Icons.calendar_month_outlined, size: 18, color: Colors.black),

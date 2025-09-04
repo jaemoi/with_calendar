@@ -41,7 +41,14 @@ class Routes {
       GoRoute(path: selectMode, builder: (_, __) => const SelectModeScreen()),
       GoRoute(
           path: createSchedule,
-          builder: (_, __) => const ScheduleUpsertScreen()),
+          builder: (context, state) {
+            final extra = state.extra;
+            DateTime? initialDate;
+            if (extra is DateTime) {
+              initialDate = DateTime(extra.year, extra.month, extra.day);
+            }
+            return ScheduleUpsertScreen(initialDate: initialDate);
+          }),
       GoRoute(
           path: editSchedule,
           builder: (context, state) {

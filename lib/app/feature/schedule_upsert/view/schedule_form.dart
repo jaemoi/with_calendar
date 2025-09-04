@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:with_calendar/app/shared/theme/palette.dart';
 
-
 import '../../schedule_detail/view/schedule_detail_screen.dart';
 import '../widget/add_chip.dart';
 import '../widget/category_chip.dart';
@@ -20,10 +19,12 @@ class ScheduleForm extends StatefulWidget {
     super.key,
     required this.mode,
     this.initial, // edit 모드일 때만 사용
+    this.initialDate,
   });
 
   final ScheduleFormMode mode;
   final Schedule? initial;
+  final DateTime? initialDate;
 
   @override
   State<ScheduleForm> createState() => _ScheduleFormState();
@@ -214,6 +215,17 @@ class _ScheduleFormState extends State<ScheduleForm> {
       _selectedParticipants
         ..clear()
         ..addAll(s.participants.map((p) => p.name));
+    }
+
+    // ✅ 생성 모드에서 initialDate가 넘어온 경우: 'Other Date'로 선택해둔다
+    if (widget.initialDate != null) {
+      final d = widget.initialDate!;
+      _customDate = DateTime(d.year, d.month, d.day);
+      _selectedDateIndex = 3; // Other Date 선택
+      _multiDay = false;
+      _endCustomDate = _customDate;
+      _endSelectedIndex = _selectedDateIndex;
+      // _from/_to는 네 기본값(12:00~14:00) 유지
     }
   }
 

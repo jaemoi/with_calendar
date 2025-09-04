@@ -6,15 +6,17 @@ import 'package:with_calendar/app/shared/theme/palette.dart';
 import '../../schedule_detail/view/schedule_detail_screen.dart';
 
 class ScheduleUpsertScreen extends StatelessWidget {
-  const ScheduleUpsertScreen({super.key, this.scheduleId});
+  const ScheduleUpsertScreen({super.key, this.scheduleId, this.initialDate});
 
   final int? scheduleId; // null이면 '추가', 값 있으면 '수정'
+  final DateTime? initialDate;
 
   @override
   Widget build(BuildContext context) {
     // 추가 모드
     if (scheduleId == null) {
-      return const ScheduleForm(mode: ScheduleFormMode.create);
+      return ScheduleForm(
+          mode: ScheduleFormMode.create, initialDate: initialDate);
     }
 
     // 수정 모드: id로 로딩
